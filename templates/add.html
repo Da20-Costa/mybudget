@@ -1,39 +1,56 @@
-{% extends "layout.html" %}
-
-{% block title %}
-    Add Transaction
-{% endblock %}
-
+{% extends "layout.html" %} {% block title %} {{ t['nav_add'] }} {% endblock %}
 {% block main %}
-    <h1 class="mb-4">Add a Transaction</h1>
-    <form action="/add" method="POST">
-        <div class="mb-3">
-            <input class="form-control" type="number" name="amount" autofocus placeholder="Amount" step="0.01" min="0.01">
-        </div>
+<h1 class="mb-4">{{ t['add_transaction'] }}</h1>
+<form action="/add" method="POST">
+  <div class="mb-3">
+    <div class="input-group">
+      <span class="input-group-text">
+        {{ 'R$' if lang == 'pt' else '$' }}
+      </span>
+      <input
+        class="form-control"
+        type="number"
+        name="amount"
+        autofocus
+        placeholder="{{ t['amount'] }}"
+        step="0.01"
+        min="0.01"
+      />
+    </div>
+  </div>
 
-        <div class="mb-3">
-            <select class="form-select" name="type">
-                <option disabled selected value="">Select Transaction Type</option>
-                {% for transaction in transactions %}
-                <option value={{ transaction }}>{{ transaction }}</option>
-                {% endfor %}
-            </select>
-        </div>
+  <div class="mb-3">
+    <select class="form-select" name="type">
+      <option disabled selected value="">
+        {{ t['input_transaction_type'] }}
+      </option>
+      {% for transaction in transactions %}
+      <option value="{{ transaction }}">{{ t[transaction] }}</option>
+      {% endfor %}
+    </select>
+  </div>
 
-        <div class="mb-3">
-            <select class="form-select" name="category">
-                <option disabled selected value="">Select Category</option>
-                {% for category in categories %}
-                    <option value="{{ category.name }}">{{ category.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
+  <div class="mb-3">
+    <select class="form-select" name="category">
+      <option disabled selected value="">{{ t['input_category'] }}</option>
+      {% for category in categories %}
+      <option value="{{ category.name }}">
+        {{ t.get(category.name, category.name) }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
 
-        <div class="mb-3">
-            <input class="form-control" type="text" name="description" placeholder="Description (Optional)">
-        </div>
+  <div class="mb-3">
+    <input
+      class="form-control"
+      type="text"
+      name="description"
+      placeholder="{{ t['input_description'] }}"
+    />
+  </div>
 
-        <button class="btn btn-primary" type="submit">Add</button>
-    </form>
+  <button class="btn btn-primary" type="submit">{{ t['submit_add'] }}</button>
+</form>
 
 {% endblock %}

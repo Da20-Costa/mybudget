@@ -1,43 +1,48 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Budgets
+    {{ t['budgets'] }}
 {% endblock %}
 
 {% block main %}
-    <h2 class="mb-4">Set Monthly Budget</h2>
+    <h2 class="mb-4">{{ t['monthly_budget'] }}</h2>
     <form action="/budget" method="POST" class="mb-5">
         <div class="row g-2">
             <div class="col-md">
-                <select name="category" class="form-select">
-                    <option disabled selected>Select Category</option>
+                <select name="category" class="form-select" required>
+                    <option disabled selected value="">{{ t['input_category'] }}</option>
                     {% for category in categories %}
-                    <option value="{{ category.name }}">{{ category.name }}</option>
+                    <option value="{{ category.name }}">{{ t.get(category.name, category.name) }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-md">
-                <input type="number" name="amount" class="form-control" placeholder="Budget Amount" step="0.01">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        {{ 'R$' if lang == 'pt' else '$' }}
+                    </span>
+                    <input type="number" name="amount" class="form-control" placeholder="{{ t['budget_amount'] }}" step="0.01" min="0.01" required>
+                </div>
             </div>
             <div class="col-md-auto">
-                <button type="submit" class="btn btn-success">Save Budget</button>
+                <button type="submit" class="btn btn-success">{{ t['budget_save'] }}</button>
             </div>
         </div>
     </form>
 
-    <h3 class="mb-4">Current Month's budgets</h3>
+    <h3 class="mb-4">{{ t['current_month_budget'] }}</h3>
     <ul class="list-group">
         {% for budget in budgets %}
         <li class="list-group-item d-flex align-items-center">
-            <span class="me-auto">{{ budget.category_name }}</span>
-            <span class="badge bg-primary rounded-pill me-3">{{ budget.amount | brl }}</span>
+            <span class="me-auto">{{ t.get(budget.category_name, budget.category_name) }}</span>
+            <span class="badge bg-primary rounded-pill me-3">{{ budget.amount | format_currency }}</span>
             <form action="/delete_budget" method="POST" style="display:inline;">
                 <input type="hidden" name="budget_id" value="{{ budget.id }}">
-                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                <button type="submit" class="btn btn-danger btn-sm">{{ t['delete'] }}</button>
             </form>
         </li>
         {% else %}
-        <li class="list-group-item">No budgets set for this month yet.</li>
+        <li class="list-group-item">{{ t['no_budgets'] }}</li>
         {% endfor %}
     </ul>
 {% endblock %}

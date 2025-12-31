@@ -1,40 +1,40 @@
 {% extends "layout.html" %}
 
 {% block title%}
-    Manage Categories
+    {{ t['nav_categories'] }}
 {% endblock %}
 
 {% block main %}
-    <h2 class="mb-4">Add New Category</h2>
+    <h2 class="mb-4">{{ t['new_category'] }}</h2>
     <form action="/categories" method="POST" class="mb-5">
         <div class="input-group">
-            <input type="text" name="category_name" class="form-control" placeholder="New Category Name">
-            <button type="submit" class="btn btn-primary">Add</button>
+            <input type="text" name="category_name" class="form-control" placeholder="{{ t['new_name'] }}" required>
+            <button type="submit" class="btn btn-primary">{{ t['submit_add'] }}</button>
         </div>
     </form>
 
     <hr>
 
-    <h2 class="mb-4 mt-4">Your Categories</h2>
+    <h2 class="mb-4 mt-4">{{ t['your_categories'] }}</h2>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Action</th>
+                <th>{{ t['name'] }}</th>
+                <th>{{ t['action'] }}</th>
             </tr>
         </thead>
         <tbody>
             {% for category in categories %}
             <tr>
-                <td>{{ category.name }}</td>
+                <td>{{ t.get(category.name, category.name) }}</td>
                 <td>
                     {% if category.user_id %}
                     <form action="/delete_category" method="POST" style="display:inline;">
-                        <input type="hidden" name="category_id" value={{ category.id }}>
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <input type="hidden" name="category_id" value="{{ category.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">{{ t['delete'] }}</button>
                     </form>
                     {% else %}
-                    <span class="text-muted">Default</span>
+                    <span class="text-muted">{{ t['default'] }}</span>
                     {% endif %}
                 </td>
             </tr>

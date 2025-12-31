@@ -7,7 +7,8 @@ from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 
-from helpers import apology, login_required, brl, format_date
+from helpers import apology, login_required, format_currency, format_date
+from translations import translations
 
 # Configure locale to brazilian portuguese
 try:
@@ -19,7 +20,7 @@ except locale.Error:
 app = Flask(__name__)
 
 # Custom filter
-app.jinja_env.filters["brl"] = brl
+app.jinja_env.filters["format_currency"] = format_currency
 app.jinja_env.filters['dateformat'] = format_date
 
 # Configure session to use filesystem (instead of signed cookies)
@@ -58,6 +59,12 @@ def process_recurring_transactions(user_id):
             )
     return
 
+@app.context_processor
+def inject_conf_var():
+    lang = session.get("language", "en")
+
+    return dict(lang=lang, t=translations[lang])
+
 
 @app.after_request
 def after_request(response):
@@ -66,6 +73,14 @@ def after_request(response):
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
+
+
+@app.route("/set_language/<lang>")
+def set_language(lang):
+    """Defines app's language"""
+    if lang in ["en", "pt"]:
+        session["language"] = lang
+    return redirect(request.referrer or "/")
 
 
 @app.route("/")
@@ -137,18 +152,22 @@ def index():
 def login():
     """Log user in"""
 
+    current_lang = session.get("language", "en")
+
     # Forget any user_id
     session.clear()
+
+    session["language"] = current_lang
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
         # Ensure username was submitted
         if not request.form.get("username"):
-            return apology("must provide username", 403)
+            return apology("error_username", 403)
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return apology("must provide password", 403)
+            return apology("error_password", 403)
 
         # Query database for username
         rows = db.execute(
@@ -159,7 +178,7 @@ def login():
         if len(rows) != 1 or not check_password_hash(
             rows[0]["hash"], request.form.get("password")
         ):
-            return apology("invalid username and/or password", 403)
+            return apology("invalid_login", 403)
 
         # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
@@ -186,25 +205,30 @@ def logout():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
+
+    current_lang = session.get("language", "en")
+
     # clear previous session
     session.clear()
+
+    session["language"] = current_lang
 
     if request.method == "POST":
         # validation of the credentials
         if not request.form.get("username"):
-            return apology("Missing username", 400)
+            return apology("missing_username", 400)
         if not request.form.get("password"):
-            return apology("Missing password", 400)
+            return apology("missing_password", 400)
         if not request.form.get("confirmation"):
-            return apology("Missing confirmation of password", 400)
+            return apology("missing_confirmation", 400)
         if request.form.get("password") != request.form.get("confirmation"):
-            return apology("Password and confirmation don't match", 400)
+            return apology("match_error", 400)
 
         # search if the user already exists
         rows = db.execute("SELECT * FROM users WHERE username=?", request.form.get("username"))
 
         if len(rows) != 0:
-            return apology("Username already in use", 400)
+            return apology("used_username", 400)
 
         # Register the user
         db.execute("INSERT INTO users (username, hash) VALUES (?, ?)", request.form.get(
@@ -235,30 +259,29 @@ def add():
         transaction_type = request.form.get("type")
         description = request.form.get("description")
         category = request.form.get("category")
+        lang = session.get("language", "en")
 
         if not amount:
-            return apology("Missing value", 400)
+            return apology("missing_value", 400)
         if not transaction_type:
-            return apology("Missing type of transaction", 400)
-        if not amount.isdigit() or float(amount) <= 0:
-            return apology("Value must be a positive number", 400)
+            return apology("missing_type", 400)
         if not category:
-            return apology("Missing category", 400)
+            return apology("missing_category", 400)
         if transaction_type not in ["Income", "Expense"]:
-            return apology("Invalid transaction type", 400)
+            return apology("invalid_type", 400)
 
         try:
             amount = float(amount)
             if amount <= 0:
                 raise ValueError
         except ValueError:
-            return apology("Amount must be a positive number", 400)
+            return apology("invalid_value", 400)
 
         db.execute(
             "INSERT INTO transactions (user_id, description, amount, type, category) VALUES (?, ?, ?, ?, ?)", session["user_id"], description, amount, transaction_type,category
         )
 
-        flash("Transaction added successfully!")
+        flash(translations[lang]["success_transaction"])
         return redirect("/")
     else:
         return render_template("add.html", transactions=transactions, categories=categories)
@@ -270,13 +293,14 @@ def delete_transaction():
     """Delete a user's transactions"""
 
     transaction_id = request.form.get("transaction_id")
+    lang = session.get("language", "en")
 
     # Delete specific user's transaction
     if transaction_id:
         db.execute(
             "DELETE FROM transactions WHERE id = ? AND user_id = ?", transaction_id, session["user_id"]
         )
-        flash("Transaction deleted!")
+        flash(translations[lang]["delete_transaction"])
 
     return redirect(request.referrer or "/")
 
@@ -323,23 +347,25 @@ def history():
 def categories():
     """Show and manage user's new categories"""
 
+    lang = session.get("language", "en")
+
     if request.method == "POST":
 
         # Get user's new category
         new_category = request.form.get("category_name")
 
         if not new_category:
-            return apology("Missing category name", 400)
+            return apology("missing_category_name", 400)
 
         # Verify if category already exists
         existing = db.execute("SELECT * FROM categories WHERE user_id=? AND name=?", session["user_id"], new_category)
         if existing:
-            return apology("Category already exists", 400)
+            return apology("used_category", 400)
 
         # Insert the new category
         db.execute("INSERT INTO categories (user_id, name) VALUES (?, ?)", session["user_id"], new_category)
 
-        flash("Category added!")
+        flash(translations[lang]["added_category"])
         return redirect("/categories")
 
     else:
@@ -354,10 +380,12 @@ def delete_category():
     """Delete a user's custom category"""
 
     category_id = request.form.get("category_id")
+    lang = session.get("language", "en")
+
 
     if category_id:
         db.execute("DELETE FROM categories WHERE id=? AND user_id=?", category_id, session["user_id"])
-        flash("Category deleted!")
+        flash(translations[lang]["delete_category"])
 
     return redirect("/categories")
 
@@ -388,6 +416,8 @@ def reports():
 def budget():
     """Allow user to set monthly budgets for categories"""
 
+    lang = session.get("language", "en")
+
     if request.method == "POST":
         category = request.form.get("category")
         amount = request.form.get("amount")
@@ -395,12 +425,12 @@ def budget():
 
         # Validation
         if not category or not amount:
-            return apology("Must provide category and amount", 400)
+            return apology("invalid_budget", 400)
         try:
             amount = float(amount)
             if amount < 0: raise ValueError
         except ValueError:
-            return apology("Amount must be a positive number", 400)
+            return apology("invalid_value", 400)
 
         # Verify if there already is a budget for this category/month
         existing_budget = db.execute(
@@ -410,7 +440,7 @@ def budget():
         if existing_budget:
             # Update
             db.execute(
-                "UPDATE budgets SET amount = ? WHERE id = ?", amount, existing_budget
+                "UPDATE budgets SET amount = ? WHERE id = ?", amount, existing_budget[0]["id"]
             )
         else:
             # Insert
@@ -418,7 +448,7 @@ def budget():
                 "INSERT INTO budgets (user_id, category_name, amount, month) VALUES (?, ?, ?, ?)", session["user_id"], category, amount, current_month
             )
 
-        flash("Budget Saved!")
+        flash(translations[lang]["save_budget"])
         return redirect("/budget")
 
     else:
@@ -442,13 +472,15 @@ def delete_budget():
     """Delete a user's budget"""
 
     budget_id = request.form.get("budget_id")
+    lang = session.get("language", "en")
+
 
     # Delete in the database
     if budget_id:
         db.execute(
             "DELETE FROM budgets WHERE id = ? AND user_id = ?", budget_id, session["user_id"]
         )
-        flash("Budget deleted!")
+        flash(translations[lang]["delete_budget"])
 
     return redirect("/budget")
 
@@ -460,6 +492,8 @@ def recurring():
 
     user_id = session["user_id"]
     transactions = ["Income", "Expense"]
+    lang = session.get("language", "en")
+
 
     if request.method == "POST":
         amount = request.form.get("amount")
@@ -470,21 +504,22 @@ def recurring():
 
         # Validation
         if not all([amount, transaction_type, description, category, day]):
-            return apology("All field are required", 400)
+            return apology("missing_recurring", 400)
         try:
             amount = float(amount)
             day = int(day)
             if amount <= 0 or not (1 <= day <= 31):
                 raise ValueError
         except ValueError:
-            return apology("Invalid amount or day of month", 400)
+            return apology("invalid_recurring", 400)
 
         # Insert the new rule in db
         db.execute(
             "INSERT INTO recurring_transactions (user_id, description, amount, type, category, day_of_month) VALUES (?, ?, ?, ?, ?, ?)", user_id, description, amount, transaction_type, category, day
         )
 
-        flash("Recurring transaction saved!")
+        flash(translations[lang]["save_recurring"])
+
         return redirect("/recurring")
 
     else:
@@ -504,11 +539,12 @@ def delete_recurring():
     """Delete a user's recurring transaction rule"""
 
     recurring_id = request.form.get("recurring_id")
+    lang = session.get("language", "en")
 
     if recurring_id:
         db.execute(
             "DELETE FROM recurring_transactions WHERE id = ? AND user_id = ?", recurring_id, session["user_id"]
         )
-        flash("Recurring transaction rule deleted!")
+        flash(translations[lang]["delete_recurring"])
 
     return redirect("/recurring")

@@ -3,11 +3,14 @@ import locale
 from datetime import datetime
 from flask import redirect, render_template, session
 from functools import wraps
+from translations import translations
 
 
 def apology(message, code=400):
     """Render message as an apology to user."""
-    return render_template("apology.html", top=code, bottom=message), code
+    lang = session.get("language", "en")
+    translated_message = translations[lang].get(message, message)
+    return render_template("apology.html", top=code, bottom=translated_message), code
 
 
 def login_required(f):
@@ -26,13 +29,42 @@ def login_required(f):
     return decorated_function
 
 
-def brl(value):
-    """Format value as BRL."""
-    return locale.currency(value, grouping=True)
+def format_currency(value):
+    """Format value as currency based on the current language."""
+    lang = session.get("language", "en")
 
-def format_date(date_string):
-    """Formata uma string de data/hora para o padrão dd/mm/YYYY."""
-    if date_string:
-        date_obj = datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
+    try:
+        value = float(value)
+    except:
+        return ""
+    
+    if lang == 'pt':
+        formatted =  f"{value:,.2f}"
+        formatted = formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+
+        return f"R$ {formatted}"
+    
+    else:
+        return f"${value:,.2f}"
+
+def format_date(value):
+    """Format a date string based on the current language."""
+    if value is None:
+        return ""
+    
+    date_obj = value
+    if isinstance(value, str):
+        try:
+            date_obj = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            try:
+                date_obj = datetime.strptime(value, '%Y-%m-%d')
+            except ValueError:
+                return value
+
+    lang = session.get("language", "en")
+
+    if lang == "pt":
+        return date_obj.strftime('%d/%m/%Y')
+    else:
         return date_obj.strftime('%m/%d/%Y')
-    return ""

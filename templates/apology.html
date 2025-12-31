@@ -1,19 +1,16 @@
-{% extends "layout.html" %}
+{% extends "layout.html" %} {% block title %} {{ t['error'] }} {% endblock %} {%
+block main %}
+<div class="alert alert-danger text-center" role="alert">
+  <h4 class="alert-heading">{{ t['error_message'] }}</h4>
 
-{% block title %}
-    Error
-{% endblock %}
+  <p>{{ bottom }}</p>
 
-{% block main %}
-    <div class="alert alert-danger text-center" role="alert">
-        <h4 class="alert-heading">Oops! An error occured.</h4>
+  <hr />
 
-        <p>{{ bottom }}</p>
+  <p class="mb-0">Code: {{ top }}</p>
+</div>
 
-        <hr>
-
-        <p class="mb-0">Code: {{ top }}</p>
-    </div>
-
-    <a href="javascript:history.back()" class="btn btn-primary mt-3">Voltar</a>
+<a href="javascript:history.back()" class="btn btn-primary mt-3"
+  >{{ t['back'] }}</a
+>
 {% endblock %}

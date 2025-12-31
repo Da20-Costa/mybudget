@@ -1,55 +1,60 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Recurring
+    {{ t['recurring'] }}
 {% endblock %}
 
 {% block main %}
-    <h2 class="mb-4">Add Recurring Transactions</h2>
+    <h2 class="mb-4">{{ t['add_recurring'] }}</h2>
     <form action="/recurring" method="POST" class="mb-5">
         <div class="mb-3">
-            <input autofocus class="form-control" name="amount" placeholder="Amount" type="number" step="0.01">
+            <div class="input-group">
+        <span class="input-group-text">
+            {{ 'R$' if lang == 'pt' else '$' }}
+        </span>
+        <input class="form-control" name="amount" placeholder="{{ t['amount'] }}" type="number" step="0.01" required>
+    </div>
         </div>
         <div class="mb-3">
-            <select class="form-select" name="type">
-                <option disabled selected value="">Select Transaction Type</option>
+            <select class="form-select" name="type" requiered>
+                <option disabled selected value="">{{ t['input_transaction_type'] }}</option>
                 {% for transaction in transactions %}
-                <option value="{{ transaction }}">{{ transaction }}</option>
+                <option value="{{ transaction }}">{{ t[transaction] }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="mb-3">
-            <select class="form-select" name="category">
-                <option disabled selected value="">Select Category</option>
+            <select class="form-select" name="category" required>
+                <option disabled selected value="">{{ t['input_category'] }}</option>
                 {% for category in categories %}
-                    <option value="{{ category.name }}">{{ category.name }}</option>
+                    <option value="{{ category.name }}">{{ t.get(category.name, category.name) }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="mb-3">
-            <input class="form-control" type="text" name="description" placeholder="Description (e.g., Salary, Netflix)">
+            <input class="form-control" type="text" name="description" placeholder="{{ t['recurring_description'] }}" required>
         </div>
         <div class="mb-3">
-            <input class="form-control" name="day_of_month" placeholder="Day of Month (1-31)" type="number">
+            <input class="form-control" name="day_of_month" placeholder="{{ t['day_month'] }}" type="number" min="1" max="31" required>
         </div>
-        <button class="btn btn-primary" type="submit">Save Recurring Rule</button>
+        <button class="btn btn-primary" type="submit">{{ t['recurring_save'] }}</button>
     </form>
 
-    <h3 class="mb-4">Your Recurring Transactions</h3>
+    <h3 class="mb-4">{{ t['your_recurring'] }}</h3>
     <ul class="list-group">
         {% for trans in recurring_trans %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
             <span>
-                <strong>{{ trans.description }}</strong> ({{ trans.amount | brl}} - Day {{ trans.day_of_month }})
-                <small class="d-block text-muted">{{ trans.type }} / {{trans.category}}</small>
+                <strong>{{ trans.description }}</strong> ({{ trans.amount | format_currency}} - {{ t['day'] }} {{ trans.day_of_month }})
+                <small class="d-block text-muted">{{ t.get(trans.type, trans.type) }} / {{t.get(trans.category, trans.category)}}</small>
             </span>
             <form action="/delete_recurring" method="POST">
                 <input type="hidden" name="recurring_id" value="{{ trans.id }}">
-                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                <button type="submit" class="btn btn-danger btn-sm">{{ t['delete'] }}</button>
             </form>
         </li>
         {% else %}
-        <li class="list-group-item">No recurring transaction set yet.</li>
+        <li class="list-group-item">{{ t['no_recurring'] }}</li>
         {% endfor %}
     </ul>
 {% endblock %}

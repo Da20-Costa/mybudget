@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Reports
+    {{ t['nav_reports'] }}
 {% endblock %}
 
 {% block main %}
-    <h2 class="mb-4">Expenses by Category</h2>
+    <h2 class="mb-4">{{ t['expenses_by_category'] }}</h2>
 
     <div id="chart-format">
         <canvas id="myPieChart"></canvas>
@@ -16,7 +16,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Get data Flask sent to the template
-            const labels = {{ labels | tojson }};
+            const labels = [
+            {% for label in labels %}
+                "{{ t.get(label, label) }}", 
+            {% endfor %}
+            ];
             const data = {{ data | tojson }};
 
             const ctx = document.getElementById('myPieChart').getContext('2d');
@@ -25,7 +29,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Expenses',
+                        label: '{{ t['expenses'] }}',
                         data: data,
                         backgroundColor: [
                             'rgba(255, 99, 132, 0.8)',
@@ -47,7 +51,7 @@
                         },
                         title: {
                             display: true,
-                            text: 'Spending Distribution',
+                            text: '{{ t['spending_distribution'] }}',
                             font: {
                                 size: 18
                             }

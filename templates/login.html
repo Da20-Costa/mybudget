@@ -1,17 +1,17 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Log In
+    {{ t['nav_login'] }}
 {% endblock %}
 
 {% block main %}
     <form action="/login" method="post">
         <div class="mb-3">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="username" placeholder="Username" type="text">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="username" placeholder="{{ t['username'] }}" type="text">
         </div>
         <div class="mb-3">
-            <input class="form-control mx-auto w-auto" name="password" placeholder="Password" type="password">
+            <input class="form-control mx-auto w-auto" name="password" placeholder="{{ t['password'] }}" type="password">
         </div>
-        <button class="btn btn-primary" type="submit">Log In</button>
+        <button class="btn btn-primary" type="submit">{{ t['nav_login'] }}</button>
     </form>
 {% endblock %}
