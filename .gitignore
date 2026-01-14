@@ -3,3 +3,5 @@ flask_session/
 *.pyc
 venv/
 *.db
+test_recurring.py
+test_budgets.py

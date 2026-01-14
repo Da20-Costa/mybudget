@@ -10,11 +10,6 @@ from datetime import datetime
 from helpers import apology, login_required, format_currency, format_date
 from translations import translations
 
-# Configure locale to brazilian portuguese
-try:
-    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-except locale.Error:
-    locale.setlocale(locale.LC_ALL, '')
 
 # Configure application
 app = Flask(__name__)
@@ -43,7 +38,7 @@ def process_recurring_transactions(user_id):
     )
 
     for rule in recurring_rules:
-        # if the transaction wasn't adde yet this month
+        # if the transaction wasn't added yet this month
         if rule["last_added"] != current_month:
             day = min(rule["day_of_month"], 28)
             transaction_date = f"{current_month}-{str(day).zfill(2)} 00:00:00"
@@ -58,6 +53,30 @@ def process_recurring_transactions(user_id):
                 "UPDATE recurring_transactions SET last_added = ? WHERE id = ?", current_month, rule["id"]
             )
     return
+
+
+def copy_previous_budgets(user_id):
+    """Copy last month's budgets to the actual month"""
+
+    current_month = datetime.now().strftime('%Y-%m')
+
+    current_budgets = db.execute(
+        "SELECT id FROM budgets WHERE user_id = ? AND month = ?", user_id, current_month
+    )
+
+    if len(current_budgets) > 0:
+        return
+    
+    last_month_recorded = db.execute(
+        "SELECT MAX(month) as last_month FROM budgets WHERE user_id = ? AND month < ?", user_id, current_month
+    )
+
+    last_month = last_month_recorded[0]["last_month"]
+
+    if last_month:
+        db.execute(
+            "INSERT INTO budgets (user_id, category_name, amount, month) SELECT user_id, category_name, amount, ? FROM budgets WHERE user_id = ? AND month = ?", current_month, user_id, last_month
+        )
 
 @app.context_processor
 def inject_conf_var():
@@ -90,6 +109,8 @@ def index():
 
     # Get user's id from the session
     user_id = session["user_id"]
+
+    copy_previous_budgets(user_id)
 
     process_recurring_transactions(user_id)
 
@@ -142,7 +163,7 @@ def index():
             "category": category,
             "budgeted": budget["amount"],
             "spent": spent,
-            "percentage": min(100, percentage) # Limits to 100%
+            "percentage": percentage
         })
 
     return render_template("index.html", username=username, total_income=total_income, total_expense=total_expense, balance=balance, recent_transactions=recent_transactions, budget_progress=budget_progress)
@@ -548,3 +569,7 @@ def delete_recurring():
         flash(translations[lang]["delete_recurring"])
 
     return redirect("/recurring")
+
+
+if __name__ == "__main__":
+    app.run()

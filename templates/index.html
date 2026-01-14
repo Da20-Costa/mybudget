@@ -88,7 +88,7 @@
         <div class="progress" style="height: 20px;">
             <div class="progress-bar {% if item.percentage > 90 %}bg-danger{% elif item.percentage > 70 %}bg-warning{% else %}bg-info{% endif %}"
                 role="progressbar"
-                style="width: {{ item.percentage }}%;"
+                style="width: {{ [item.percentage, 100]|min }}%; min-width: 2em"
                 aria-valuenow="{{ item.percentage }}"
                 aria-valuemin="0"
                 aria-valuemax="100">
