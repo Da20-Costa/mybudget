@@ -1,4 +1,4 @@
-# Meu Orçamento (My Budget)
+# My Budget
 
 Um aplicativo web full-stack para gerenciamento de finanças pessoais, construído com Python, Flask e SQL. Originalmente feito como o projeto final do curso CS50 de Harvard.
 <br>
@@ -10,7 +10,7 @@ A full-stack web aplication for personal finance management, built with Python, 
 
 ## 🇧🇷 Sobre o Projeto (Português)
 
-O **Meu Orçamento** é uma aplicação web completa, projetada para capacitar usuários a assumirem o controle de suas finanças pessoais. A ferramenta permite registrar receitas e despesas, categorizá-las, definir orçamentos mensais com acompanhamento visual, analisar gastos através de gráficos e automatizar o lançamento de transações recorrentes.
+O **My Budget** é uma aplicação web completa, projetada para capacitar usuários a assumirem o controle de suas finanças pessoais. A ferramenta permite registrar receitas e despesas, categorizá-las, definir orçamentos mensais com acompanhamento visual, analisar gastos através de gráficos e automatizar o lançamento de transações recorrentes.
 
 O objetivo é oferecer uma plataforma intuitiva e poderosa para que os usuários possam entender seus hábitos de consumo, planejar o futuro e alcançar seus objetivos financeiros.
 
